@@ -80,18 +80,11 @@ docker-build-ce-2.2:
   before_script:
     - ls -al # to see if caching works
     - export CMAKE_DUMMY_WEBUI=YES
+    - tarantoolctl rocks install third_party/vshard-scm-1.rockspec
     - tarantoolctl rocks make
     - tarantoolctl rocks list
-  after_script:
-    # avoid caching cartridge rock
-    - tarantoolctl rocks remove cartridge
-  cache:
-    key: ${IMAGE_NAME}-fake-ui
-    paths:
-      - build.luarocks/
-      - .rocks/
 
-integration-ee:
+.integration-ee:
   <<: *test-template
   script: &integration-script
     - pytest -v
@@ -99,21 +92,21 @@ integration-ee:
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
 
-integration-ce-1.10:
+.integration-ce-1.10:
   <<: *test-template
   script: *integration-script
   variables:
     IMAGE_NAME: *IMAGE_NAME_CE_1_10
   when: manual
 
-integration-ce-2.2:
+.integration-ce-2.2:
   <<: *test-template
   script: *integration-script
   variables:
     IMAGE_NAME: *IMAGE_NAME_CE_2_2
   when: manual
 
-compatibility:
+compatibility-ee:
   <<: *test-template
   variables:
     IMAGE_NAME: *IMAGE_NAME_EE
@@ -121,9 +114,30 @@ compatibility:
   script:
     - mkdir -p $CARTRIDGE_OLDER_PATH
     - (cd $CARTRIDGE_OLDER_PATH; tarantoolctl rocks install cartridge 1.2.0-1)
-    - luatest -v -p compatibility.upgrade
+    - luatest -v -p compatibility.upgrade -c
 
-misc:
+compatibility-ce-1.10:
+  <<: *test-template
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_CE_1_10
+    CARTRIDGE_OLDER_PATH: /tmp/cartridge-1.2.0
+  script:
+    - mkdir -p $CARTRIDGE_OLDER_PATH
+    - (cd $CARTRIDGE_OLDER_PATH; tarantoolctl rocks install cartridge 1.2.0-1)
+    - luatest -v -p compatibility.upgrade -c
+
+compatibility-ce-2.2:
+  <<: *test-template
+  variables:
+    IMAGE_NAME: *IMAGE_NAME_CE_2_2
+    CARTRIDGE_OLDER_PATH: /tmp/cartridge-1.2.0
+  script:
+    - mkdir -p $CARTRIDGE_OLDER_PATH
+    - (cd $CARTRIDGE_OLDER_PATH; tarantoolctl rocks install cartridge 1.2.0-1)
+    - luatest -v -p compatibility.upgrade -c
+
+
+.misc:
   <<: *test-template
   script:
     - luacheck .
@@ -175,7 +189,7 @@ misc:
       - webui/cypress/screenshots/
       - webui/cypress/videos/
 
-cypress-auto:
+.cypress-auto:
   <<: *cypress-template
   only:
     changes:
@@ -183,7 +197,7 @@ cypress-auto:
       - webui/cypress/**/*
       - test/cypress/**/*
 
-cypress-manual:
+.cypress-manual:
   <<: *cypress-template
   when: manual
 

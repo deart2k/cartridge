@@ -2,7 +2,7 @@ local fio = require('fio')
 local digest = require('digest')
 local helpers = table.copy(require('cartridge.test-helpers'))
 
-helpers.project_root = fio.dirname(debug.sourcedir())
+helpers.project_root = fio.dirname(fio.abspath(debug.sourcedir()))
 
 local __fio_tempdir = fio.tempdir
 fio.tempdir = function()
