@@ -157,11 +157,13 @@ function g.test_routing()
 
     local res, err = rpc_call(B2,
         'myrole', 'void', nil,
-        {uri = 'localhost:0'}
+        {uri = 'localhost:3033'}
     )
     t.assert_covers({
-        ['"localhost:0": ' .. errno.strerror(errno.ECONNREFUSED)] = true,
-        ['"localhost:0": ' .. errno.strerror(errno.ENETUNREACH)] = true,
+        -- Connection refused
+        ['"localhost:3033": ' .. errno.strerror(errno.ECONNREFUSED)] = true,
+        -- Network is unreachable
+        ['"localhost:3033": ' .. errno.strerror(errno.ENETUNREACH)] = true,
     }, {[err.err] = true})
     t.assert_equals(err.class_name, 'NetboxConnectError')
     t.assert_not(res)
