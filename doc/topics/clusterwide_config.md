@@ -72,7 +72,8 @@ And config represents as following structure:
 ```
 
 On filesystem clusterwide config is represented by a file tree.
-Previous config on filesystem looks like this:
+As you see, ClusterwideConfig support nested folders, you need to add
+section with path_delimiter `/`. Previous config on filesystem looks like this:
 ```
 |- config_dir
             |- forex.yml
@@ -116,23 +117,57 @@ also `patch_clusterwide` is a part of public `cartridge` API named `cartridge.co
 # Applying config API
 
 API for apply new config:
-- Lua and Luatest
-- Http and graphql
+- Lua
+- Luatest
+- Http
+- Graphql
 
 ## Lua and Luatest API
 
 ### Lua API
-- `cartridge.config_patch_clusterwide(patch)`
-- `cartridge.config_get_readonly()`
-- `cartridge.config_get_deepcopy()`
+- `cartridge.config_patch_clusterwide(patch)` - apply config patch
+  
+- `cartridge.config_get_deepcopy(section_name)`
+  @tparam[opt] string section_name
+  @treturn table
+  If key is nil then returns all config data (_plaintext - yaml encoed data and unmarshalled data)
+  also here we can see cartridge.system_sections (topology, vshard, users_acl, auth)
 
-<!-- Add examples -->
+- `cartridge.config_get_readonly(section_name)`
+  same as get_deepcopy, but data can't be modified
+
+```lua
+localhost:3301> cartridge.config_patch_clusterwide({['data.yml'] = '---\ndata: 5\n...'})
+---
+- true
+...
+
+localhost:3301> cartridge.config_get_readonly('data.yml')
+---
+- '---
+
+  data: 5
+
+  ...'
+...
+
+localhost:3301> cartridge.config_get_readonly('data')
+---
+- data: 5
+...
+
+-- Same for config.get_deepcopy()
+```
 
 There are also many API endpoints that implicitly calls `twophase.patch_clusterwide()`
 Some of them:
-- Auth: `add_user`/`edit_user`/`remove_user`
+- Auth: `auth.set_params()`
+- Users acl: `add_user`/`edit_user`/`remove_user`
 - Topology: `edit_topology` (and deprecated `edit_server`/`expel_server`/`join_server`/`edit_replicaset`)
-
+- Vshard utils edit_vshard_options; admin_bootstrap_vshard
+- Failover set_params(opts) / lua_api_failover set_failover params() graphql
+- api_ddl
+- api_config
 
 ### Luatest API
 
@@ -189,7 +224,9 @@ This sections can't be modified by raw update/download config, because for modif
 `cartridge` have separate API with additional validation checks.
 Some of them:
 - Auth: `add_user`/`edit_user`/`remove_user`
-- Topology: `edit_topology` (and deprecated `edit_server`/`expel_server`/`join_server`/`edit_replicaset`)
+- Topology: `edit_topology` (and deprecated `edit_server`/`expel_server`/`join_server`/`edit_replicaset`) and failover gql endoints
+- Vshard:
+- Api ddl
 
 
 ## Graphql API
